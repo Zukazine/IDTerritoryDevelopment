@@ -13,11 +13,14 @@ st.title('Cipta Karya Dashboard 🌊')
 option = st.selectbox('Pilih Provinsi TPA : ', ['Banten', 'DI Yogyakarta', 'Jawa Barat', 'Jawa Tengah','Jawa Timur', 'Kalimantan Barat', 'Kalimantan Tengah', 'Kalimantan Selatan', 'Kalimantan Timur', 'Kalimantan Utara', 'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Kep. Riau', 'Bengkulu', 'Jambi', 'Sumatera Selatan', 'Kep. Bangka Belitung', 'Lampung'])
 
 def read_data():
-    data = gpd.read_file('dataset/TPA.geojson')
+    data = gpd.read_file('dataset/complete_tpa.geojson')
     return data
 
 def marker():
-    tpa = read_data()
+    if 'tpa_data' not in st.session_state:
+        st.session_state.tpa_data = read_data() 
+
+    tpa = st.session_state.tpa_data
     
     m = folium.Map(location=[0.7893,113.9213], zoom_start=5)
 

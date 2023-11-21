@@ -16,7 +16,10 @@ def read_data():
     return data
 
 def marker():
-    water = read_data()
+    if 'water_data' not in st.session_state:
+        st.session_state.water_data = read_data() 
+
+    water = st.session_state.water_data
     
     m = folium.Map(location=[0.7893,113.9213], zoom_start=5)
 
