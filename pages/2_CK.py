@@ -1,16 +1,20 @@
-import pandas as pd
 import geopandas as gpd
 import folium
 import streamlit as st
 from folium.plugins import MarkerCluster
 import math
-from streamlit_folium import folium_static
 
 st.set_page_config(layout="wide") 
 
 st.title('Cipta Karya Dashboard 🌊')
 
-option = st.selectbox('Pilih Provinsi TPA : ', ['Banten', 'DI Yogyakarta', 'Jawa Barat', 'Jawa Tengah','Jawa Timur', 'Kalimantan Barat', 'Kalimantan Tengah', 'Kalimantan Selatan', 'Kalimantan Timur', 'Kalimantan Utara', 'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Kep. Riau', 'Bengkulu', 'Jambi', 'Sumatera Selatan', 'Kep. Bangka Belitung', 'Lampung'])
+left, right = st.columns(2)
+
+with left:
+    province = st.selectbox('Pilih Provinsi', ['Banten', 'DI Yogyakarta', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur', 'Kalimantan Barat', 'Kalimantan Tengah', 'Kalimantan Selatan', 'Kalimantan Timur', 'Kalimantan Utara', 'Aceh', 'Sumatera Utara', 'Sumatera Barat', 'Riau', 'Kep. Riau', 'Bengkulu', 'Jambi', 'Sumatera Selatan', 'Kep. Bangka Belitung', 'Lampung', 'Sulawesi Utara', 'Gorontalo', 'Sulawesi Tengah', 'Sulawesi Barat', 'Sulawesi Tenggara', 'Sulawesi Selatan', 'Bali', 'Nusa Tenggara Barat', 'Nusa Tenggara Timur', 'Maluku','Maluku Utara', 'Papua', 'Papua Barat'])
+
+with right:
+    sector = st.selectbox('Pilih Sektor CK', ['TPA'])
 
 def read_data():
     data = gpd.read_file('dataset/complete_tpa.geojson')
@@ -29,7 +33,7 @@ def marker():
     for idx, row in tpa.iterrows():
         if not math.isnan(row['koord_x']) and not math.isnan(row['koord_y']):
             mc.add_child(folium.Marker([row['koord_y'], row['koord_x']], 
-                                    tooltip='remarks : {}<br> Kapasitas TPA : {}'.format(row['remarks'], row['kaptpa']))).add_to(m)
+                                    tooltip='Keterangan : {}<br> Kapasitas TPA : {}'.format(row['remarks'], row['kaptpa']))).add_to(m)
             
     folium.plugins.Fullscreen(
     position="topright",
@@ -40,10 +44,12 @@ def marker():
 
     return m
 
-if option:
+if province and sector:
     with st.spinner('Constructing ...'):
-        folium_static(marker(), width=850, height=400)
+        html_map = marker()._repr_html_()
+        st.markdown(html_map, unsafe_allow_html=True)
 
+st.markdown('')
 with st.expander("**Penjelasan Parameter Prioritasisasi**"):
     st.markdown('Berikut merupakan parameter yang digunakan sehingga peta prioritas bisa terbentuk : ')
 
