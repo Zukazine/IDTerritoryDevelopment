@@ -28,6 +28,7 @@ def marker():
     
     m = folium.Map(location=[0.7893,113.9213], zoom_start=5)
 
+
     mc = MarkerCluster()
 
     for idx, row in tpa.iterrows():
