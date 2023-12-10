@@ -5,12 +5,41 @@
 -- elevation value
 
 FINISHING
-- mapstyle
-- value color 
-- 2d or 3d
+- mapstyle wip 
+- value color v
+- 2d or 3d v
 - wide or dark
-- per province
-- cta on the map
+- per province wip
+- cta on the map tip
 
-440154FF
-FDE725FF
+WHAT WE HAVE
+- Polygon irrigation every province with province centroid (lat, long)
+- Value irrigation (Newest Applied)
+- Combine All -> GEOJSON File every province -> Save on irri_province folder
+
+MAP FOR PROVISION THE D.I
+- MarkerCluster (nama, from gridclass compute the action)
+
+TO PDK
+(function)
+- gpd.read GEOJSON file selected 
+- gdf -> json interface
+- df empty diisi
+-- 'coordinates'
+-- 'gridclass'
+-- 'elevation' -> gridclass * C
+-- 'colors' -> Map(gridclass)
+- view_state -> centroid(lat, long)
+- polygon layer = pdk.layer(default)
+- deck -> style and map provider
+- add tooltip function ((sudah baik),(perlu opor), etc)
+
+TO FOL CHOROPLETH
+(function)
+- gpd.read GEOJSON file selected
+- view_state -> centroid(lat, long)
+- compute geo_data -> 'provinsi', 'geometry'
+- compute values -> gridclass
+- fill_color -> mapping function
+- legend_name
+- line color dihilangin
