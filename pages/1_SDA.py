@@ -2,8 +2,11 @@ import streamlit as st
 import geopandas as gpd
 import folium
 import math
-from streamlit_folium import folium_static
+import pandas as pd
+import pydeck as pdk
 from folium.plugins import MarkerCluster
+from folium import Marker
+
 
 st.set_page_config(layout="wide") 
 
@@ -12,29 +15,156 @@ st.title('SDA Dashboard 🌊')
 left, right = st.columns(2)
 
 with left:
-    province = st.selectbox('Pilih Provinsi', ['Sulawesi Selatan', 'Lampung', 'Jawa Tengah', 'Bali', 'Aceh','Sumatera Utara', 'Sumatera Selatan', 'Banten', 'Nusa Tenggara Barat', 'Kalimantan Selatan', 'Jawa Timur', 'Daerah Istimewa Yogyakarta', 'Sumatera Barat', 'Jawa Barat', 'Sulawesi Utara', 'Bangka Belitung', 'Bengkulu', 'Gorontalo', 'Jambi', 'Kalimantan Tengah', 'Kepulauan Riau', 'Maluku', 'Maluku Utara', 'Nusa Tenggara Timur', 'Riau', 'Papua Barat', 'Sulawesi Barat', 'Sulawesi Tengah'])
+    province = st.selectbox('Pilih Provinsi', ['Aceh', 'Bali', 'Banten', 'Bengkulu', 'Daerah Istimewa Yogyakarta', 'DKI Jakarta', 'Gorontalo', 'Jambi', 'Jawa Barat', 'Jawa Tengah', 'Jawa Timur', 'Kalimantan Selatan', 'Kalimantan Tengah', 'Kepulauan Bangka Belitung', 'Kepulauan Riau', 'Lampung', 'Maluku Utara', 'Maluku', 'Nusa Tenggara Barat', 'Nusa Tenggara Timur', 'Papua Barat', 'Riau', 'Sulawesi Barat', 'Sulawesi Selatan', 'Sulawesi Tengah', 'Sulawesi Tenggara', 'Sulawesi Utara', 'Sumatera Barat', 'Sumatera Selatan', 'Sumatera Utara'])
 
 with right:
-    sector = st.selectbox('Pilih Sektor SDA', ['Irigasi'])
+    sector = st.selectbox('**Pilih Sektor SDA**', ['Irigasi'])
 
-def read_data():
-    data = gpd.read_file('dataset/irrigation.shp')
-    return data
+with st.expander(":red[**Kustomisasi Map**]"):
+    option = st.radio('Pilih detail Geo-Visualization : ', ['Choropleth 2D', 'Choropleth 2D & 3D', 'Marker Cluster'])
 
-def marker():
-    if 'water_data' not in st.session_state:
-        st.session_state.water_data = read_data() 
-
-    water = st.session_state.water_data
+def color_map(val):
+    viridis_colors = [
+    [68, 1, 84], [69, 4, 87], [70, 8, 92], [70, 11, 94],
+    [71, 16, 99], [72, 19, 101], [72, 23, 105], [72, 27, 109], [72, 29, 111],
+    [72, 33, 115], [72, 36, 117], [72, 40, 120], [71, 44, 122], [71, 46, 124],
+    [71, 50, 126], [70, 52, 128], [70, 56, 130], [68, 58, 131], [67, 62, 133],
+    [66, 65, 134], [65, 68, 135], [63, 71, 136], [62, 73, 137], [61, 77, 138],
+    [60, 80, 139], [59, 82, 139], [57, 85, 140], [56, 88, 140], [55, 91, 141],
+    [54, 93, 141], [52, 96, 141], [51, 99, 141], [50, 101, 142], [49, 104, 142],
+    [48, 106, 142], [46, 109, 142], [45, 112, 142], [44, 113, 142], [43, 116, 142],
+    [42, 118, 142], [41, 121, 142], [40, 124, 142], [39, 126, 142], [38, 129, 142],
+    [38, 130, 142], [37, 133, 142], [36, 135, 142], [35, 138, 141], [34, 141, 141],
+    [33, 143, 141], [32, 146, 140], [32, 147, 140], [31, 150, 139], [31, 153, 138],
+    [30, 155, 138], [31, 158, 137], [31, 160, 136], [31, 162, 135], [32, 164, 134],
+    [34, 167, 133], [36, 170, 131], [37, 172, 130], [40, 174, 128], [42, 176, 127],
+    [46, 179, 124], [50, 182, 122], [53, 183, 121], [58, 186, 118], [61, 188, 116],
+    [66, 190, 113], [72, 193, 110], [76, 194, 108], [82, 197, 105], [86, 198, 103],
+    [92, 200, 99], [96, 202, 96], [103, 204, 92], [110, 206, 88], [115, 208, 86],
+    [122, 209, 81], [127, 211, 78], [134, 213, 73], [142, 214, 69], [147, 215, 65],
+    [155, 217, 60], [160, 218, 57], [168, 219, 52], [173, 220, 48], [181, 222, 43],
+    [189, 223, 38], [194, 223, 35], [202, 225, 31], [208, 225, 28], [216, 226, 25],
+    [223, 227, 24], [229, 228, 25], [236, 229, 27], [241, 229, 29], [248, 230, 33],
+    [253, 231, 37]
+    ]
     
-    m = folium.Map(location=[0.7893,113.9213], zoom_start=5)
+    return viridis_colors[val-1]
+
+def calculate_emergeval(val):
+    return val * 50
+
+def cplethdeck(file):
+    ''' VISUALIZE WITH PDK & EACH PROVINCE - 3D Model'''
+
+    file = 'irrigation_provinces_json\{:s}'.format(file)
+
+    json  = pd.read_json(file)
+    df = pd.DataFrame()
+
+    df["coordinates"] = json["features"].apply(lambda row: row["geometry"]["coordinates"])
+    df["gridclass"] = json["features"].apply(lambda row: row["properties"]["gridcode"])
+    df['colors'] = df.gridclass.apply(lambda x: color_map(x))
+    df['lat'] = json["features"].apply(lambda row: row["properties"]["latitude"])
+    df['lng'] = json["features"].apply(lambda row: row["properties"]["longitude"])
+
+    view_state = pdk.ViewState(
+        **{"latitude": df['lat'].iloc[0], "longitude": df['lng'].iloc[0], "zoom": 8, "maxZoom": 16, "pitch": 0, "bearing": 0}
+    )
+
+    polygon_layer = pdk.Layer(
+        "PolygonLayer",
+        df[:20000],
+        id="geojson",
+        # opacity=0.8,
+        stroked=False,
+        get_polygon="coordinates",
+        filled=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation=0,
+        get_fill_color="colors",
+        # get_line_color=[0, 0, 0],
+        auto_highlight=True,
+        pickable=True,
+    )
+
+    # tooltip = {"html": "<b>Value per Square Meter:</b> {valuePerSqm} <br /><b>Growth rate:</b> {growth}"}
+
+    r = pdk.Deck(
+        polygon_layer,
+        # map_provider='google_maps',
+        map_style='road',
+        initial_view_state=view_state,
+        # tooltip=tooltip,
+    )
+    return r
+
+def cplethdeck_3D(file):
+    ''' VISUALIZE WITH PDK & EACH PROVINCE - 3D Model'''
+
+    file = 'irrigation_provinces_json\{:s}'.format(file)
+
+    json  = pd.read_json(file)
+    df = pd.DataFrame()
+
+    df["coordinates"] = json["features"].apply(lambda row: row["geometry"]["coordinates"])
+    df["gridclass"] = json["features"].apply(lambda row: row["properties"]["gridcode"])
+    df['colors'] = df.gridclass.apply(lambda x: color_map(x))
+    df["emerge_value"] = json["features"].apply(lambda row: calculate_emergeval(row["properties"]["gridcode"]))
+    df['lat'] = json["features"].apply(lambda row: row["properties"]["latitude"])
+    df['lng'] = json["features"].apply(lambda row: row["properties"]["longitude"])
+
+    view_state = pdk.ViewState(
+        **{"latitude": df['lat'].iloc[0], "longitude": df['lng'].iloc[0], "zoom": 9, "maxZoom": 16, "pitch": 75, "bearing": 0}
+    )
+
+    polygon_layer = pdk.Layer(
+        "PolygonLayer",
+        df[:20000],
+        id="geojson",
+        # opacity=0.8,
+        stroked=False,
+        get_polygon="coordinates",
+        filled=True,
+        extruded=True,
+        wireframe=True,
+        get_elevation='emerge_value',
+        get_fill_color="colors",
+        get_line_color="colors",
+        auto_highlight=True,
+        pickable=True,
+    )
+
+    # tooltip = {"html": "<b>Value per Square Meter:</b> {valuePerSqm} <br /><b>Growth rate:</b> {growth}"}
+
+    r = pdk.Deck(
+        polygon_layer,
+        # map_provider='google_maps',
+        map_style='road',
+        initial_view_state=view_state,
+        # tooltip=tooltip,
+    )
+    return r
+
+def marker(file):
+    gdf = gpd.read_file('irrigation_provinces_json\{:s}'.format(file))
+    lat, lng = gdf.latitude.iloc[0], gdf.longitude.iloc[0]
+
+    if 'irri_data' not in st.session_state:
+        st.session_state.irri_data = gpd.read_file('dataset/irrigation.shp') 
+
+    irri_data = st.session_state.irri_data
+    
+    m = folium.Map(location=[0.7893,113.9213], 
+                 zoom_start=5)
 
     mc = MarkerCluster()
-
-    for idx, row in water.iterrows():
+    for idx, row in irri_data.iterrows():
         if not math.isnan(row['koord_x']) and not math.isnan(row['koord_y']):
-            mc.add_child(folium.Marker([row['koord_y'], row['koord_x']], 
-                                    tooltip='{}<br> Luas Daerah : {}'.format(row['nm_inf'], row['luas_ha']))).add_to(m)
+            mc.add_child(Marker([row['koord_y'], row['koord_x']],
+                                tooltip='Nama Infrastruktur : {:s}<br>Provinsi : {:s} <br>Luas : {:d} hektar'.format(row['nm_inf'], row['provinsi'], row['luas_ha'])))
+
+    m.add_child(mc)
             
     folium.plugins.Fullscreen(
     position="topright",
@@ -45,14 +175,26 @@ def marker():
 
     return m
 
-if province and sector:
+lmap, rmap = st.columns(2)
+
+if province and sector and option:
     with st.spinner('Constructing ...'):
-        html_map = marker()._repr_html_()
-        st.markdown(html_map, unsafe_allow_html=True)
-        st.markdown('')
-        st.markdown('')
-        # folium_static(marker(), width=850, height=400)
-    
+        if option == 'Choropleth 2D':
+            st.pydeck_chart(cplethdeck(province+'.json'))
+        elif option == 'Choropleth 2D & 3D':
+            with lmap:
+                st.pydeck_chart(cplethdeck(province+'.json'))
+            with rmap:
+                st.pydeck_chart(cplethdeck_3D(province+'.json'))
+        elif option =='Marker Cluster':
+            html_map = marker(province+'.json')._repr_html_()
+            st.markdown(html_map, unsafe_allow_html=True)
+        else:
+            st.warning('Wa Wi Wu')
+                
+
+st.markdown('')
+
 with st.expander(":red[**Parameter Prioritasisasi**]"):
     params = st.selectbox('Pilih Parameter', ['Kemiringan Lereng', 'Jenis Tutupan Lahan (LULC)', 'Presipitasi','Populasi', 'Normalized Difference Salinity Index', 'Jaringan Jalan', 'Jaringan Sungai', 'Soil pH', 'Soil Clay', 'Infrastruktur Air', 'Produktivitas Pertanian Padi', 'Neraca Air'])
     if params:

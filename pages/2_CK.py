@@ -32,9 +32,8 @@ def marker():
     mc = MarkerCluster()
 
     for idx, row in tpa.iterrows():
-        if not math.isnan(row['koord_x']) and not math.isnan(row['koord_y']):
-            mc.add_child(folium.Marker([row['koord_y'], row['koord_x']], 
-                                    tooltip='Keterangan : {}<br> Kapasitas TPA : {}'.format(row['remarks'], row['kaptpa']))).add_to(m)
+        mc.add_child(folium.Marker([row['geometry'].y, row['geometry'].x], 
+                                    )).add_to(m)
             
     folium.plugins.Fullscreen(
     position="topright",

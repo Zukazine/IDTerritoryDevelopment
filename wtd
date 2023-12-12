@@ -13,33 +13,35 @@ FINISHING
 - cta on the map tip
 
 WHAT WE HAVE
-- Polygon irrigation every province with province centroid (lat, long)
-- Value irrigation (Newest Applied)
-- Combine All -> GEOJSON File every province -> Save on irri_province folder
+- Polygon irrigation every province with province centroid (lat, long) done
+- Value irrigation (Newest Applied) done
+- Combine All -> GEOJSON File every province -> Saved on irri_province folder done
+- Valditing reducted geoms province vs actual geoms per province done
 
 MAP FOR PROVISION THE D.I
-- MarkerCluster (nama, from gridclass compute the action)
+- MarkerCluster (nama, from gridclass compute the action) done
+## the purpose of markercluster per province merely a useless method to show all point in the narrower polygon (if there's just 2 markers in 1 province or less then its overkilling the dashboard)
 
 TO PDK
 (function)
-- gpd.read GEOJSON file selected 
-- gdf -> json interface
-- df empty diisi
+- gpd.read GEOJSON file selected done
+- gdf -> json interface done
+- df empty diisi done
 -- 'coordinates'
 -- 'gridclass'
 -- 'elevation' -> gridclass * C
 -- 'colors' -> Map(gridclass)
-- view_state -> centroid(lat, long)
-- polygon layer = pdk.layer(default)
-- deck -> style and map provider
-- add tooltip function ((sudah baik),(perlu opor), etc)
+- view_state -> centroid(lat, long) 
+- polygon layer = pdk.layer(default) done
+- deck -> style and map provider done
+- add tooltip function ((sudah baik),(perlu opor), etc) done
 
-TO FOL CHOROPLETH
-(function)
-- gpd.read GEOJSON file selected
-- view_state -> centroid(lat, long)
-- compute geo_data -> 'provinsi', 'geometry'
-- compute values -> gridclass
-- fill_color -> mapping function
-- legend_name
-- line color dihilangin
+Streamliting : 
+- each province selector done
+- each province map : 
+-- choropleth pydeck done
+-- markercluster
+- Tooltip choropleth (max, min, mean, median)
+- Legenda (SIA) -> choropleth
+- Tooltip markercluster (Nama DI, Provinsi, Luas Ha)
+
